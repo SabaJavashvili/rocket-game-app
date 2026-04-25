@@ -4783,13 +4783,14 @@
     } catch (_) { return []; }
   }
 
-  function ensureNicknameOverlay() {
+  function ensureNicknameOverlay(isEdit) {
     if (document.getElementById('nickOverlay')) return;
     const wrap = document.createElement('div');
     wrap.id = 'nickOverlay';
+    const greeting = isEdit ? '' : '<h2>გაუმარჯოს 🚀</h2>';
     wrap.innerHTML = `
       <div class="nick-card">
-        <h2>გაუმარჯოს 🚀</h2>
+        ${greeting}
         <p>ჩაწერე შენი სახელი</p>
         <input id="nickInput" maxlength="20" placeholder="მაგ: მალხაზი" autocomplete="off" />
         <button id="nickSaveBtn" type="button">დადასტურება</button>
@@ -4803,7 +4804,6 @@
       if (v.length < 2) { input.focus(); return; }
       setNick(v);
       wrap.remove();
-      resumeGameAfterNickname();
     }
     btn.addEventListener('click', commit);
     btn.addEventListener('pointerup', commit);
@@ -4836,8 +4836,7 @@
     wrap.querySelector('#lbEditBtn').addEventListener('click', () => {
       close();
       localStorage.removeItem(LS_NICK);
-      pauseGameForNickname();
-      ensureNicknameOverlay();
+      ensureNicknameOverlay(true);
     });
     fetchTop10().then(rows => {
       const ol = wrap.querySelector('#lbList');
@@ -4887,24 +4886,38 @@
     }, 500);
   }
 
-  // --- Pause/resume game while nickname overlay is shown ---
-  function pauseGameForNickname() {
-    if (window.GAME) window.GAME.over = true;
-    document.body.classList.add('nick-paused');
+  // --- Real pause: intercept requestAnimationFrame so the entire game loop freezes.
+  // Setting GAME.over=true wasn't enough — UFO movement, rocks, comets etc. update
+  // every tick regardless of game-over state, so the world kept moving visually.
+  const _origRaf = window.requestAnimationFrame.bind(window);
+  const _pendingRafs = [];
+  let _isPaused = false;
+  window.requestAnimationFrame = function (cb) {
+    if (_isPaused) { _pendingRafs.push(cb); return -1; }
+    return _origRaf(cb);
+  };
+  function pauseGame() {
+    if (_isPaused) return;
+    _isPaused = true;
+    document.body.classList.add('rg-paused');
   }
-  function resumeGameAfterNickname() {
-    document.body.classList.remove('nick-paused');
-    if (window.GAME) window.GAME.over = false;
-    // Reset spawn timers so things don't all spawn at once after pause
-    if (window.__resetSpawnTimers) window.__resetSpawnTimers();
+  function resumeGame() {
+    if (!_isPaused) return;
+    _isPaused = false;
+    document.body.classList.remove('rg-paused');
+    while (_pendingRafs.length) _origRaf(_pendingRafs.shift());
   }
+  // Auto-pause whenever ANY of our overlays are mounted; auto-resume otherwise.
+  const _overlayObs = new MutationObserver(() => {
+    const any = !!document.getElementById('nickOverlay') ||
+                !!document.getElementById('lbOverlay');
+    if (any) pauseGame(); else resumeGame();
+  });
 
   function boot() {
+    _overlayObs.observe(document.body, { childList: true });
     ensureTrophyBtn();
-    if (!getNick()) {
-      pauseGameForNickname();
-      ensureNicknameOverlay();
-    }
+    if (!getNick()) ensureNicknameOverlay();
     watchGameState();
   }
   if (document.readyState === 'loading') {
@@ -4916,10 +4929,13 @@
 </script>
 
 <style>
+  /* Trophy button — sits on the right under the life meter (which is at top:72px,
+     ~196px tall on desktop / top:60px, ~162px tall on mobile). Fixed px keeps the
+     position consistent regardless of viewport height. */
   #lbBtn {
     position: fixed;
-    top: clamp(180px, 26vh, 260px);   /* below the health bar */
-    left: 14px;
+    top: 280px;
+    right: 22px;
     width: 44px; height: 44px;
     border-radius: 50%;
     border: 2px solid rgba(255, 215, 110, 0.7);
@@ -4937,8 +4953,8 @@
     #lbBtn {
       width: 38px; height: 38px;
       font-size: 18px;
-      left: 10px;
-      top: clamp(150px, 22vh, 220px);
+      right: 14px;
+      top: 232px;
     }
   }
   #nickOverlay {
