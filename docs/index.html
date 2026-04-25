@@ -4789,9 +4789,9 @@
     wrap.id = 'nickOverlay';
     wrap.innerHTML = `
       <div class="nick-card">
-        <h2>მოგესალმები 🚀</h2>
-        <p>აირჩიე სახელი ლიდერბორდისთვის</p>
-        <input id="nickInput" maxlength="20" placeholder="მაგ: საბა" autocomplete="off" />
+        <h2>გაუმარჯოს 🚀</h2>
+        <p>ჩაწერე შენი სახელი</p>
+        <input id="nickInput" maxlength="20" placeholder="მაგ: მალხაზი" autocomplete="off" />
         <button id="nickSaveBtn" type="button">დადასტურება</button>
       </div>`;
     document.body.appendChild(wrap);
@@ -4803,6 +4803,7 @@
       if (v.length < 2) { input.focus(); return; }
       setNick(v);
       wrap.remove();
+      resumeGameAfterNickname();
     }
     btn.addEventListener('click', commit);
     btn.addEventListener('pointerup', commit);
@@ -4822,8 +4823,7 @@
         <button class="lb-close" id="lbCloseBtn" aria-label="დახურვა">×</button>
         <h2>ლიდერბორდი</h2>
         <div class="lb-personal">
-          <div><span class="lb-label">თქვენი:</span> <strong>${escapeHtml(myNick)}</strong></div>
-          <div><span class="lb-label">რეკორდი:</span> <strong>${best}</strong></div>
+          <div><span class="lb-label">პირადი რეკორდი:</span> <strong>${best}</strong></div>
           <button class="lb-edit" id="lbEditBtn" type="button">სახელის შეცვლა</button>
         </div>
         <h3>ტოპ 10</h3>
@@ -4836,6 +4836,7 @@
     wrap.querySelector('#lbEditBtn').addEventListener('click', () => {
       close();
       localStorage.removeItem(LS_NICK);
+      pauseGameForNickname();
       ensureNicknameOverlay();
     });
     fetchTop10().then(rows => {
@@ -4886,9 +4887,24 @@
     }, 500);
   }
 
+  // --- Pause/resume game while nickname overlay is shown ---
+  function pauseGameForNickname() {
+    if (window.GAME) window.GAME.over = true;
+    document.body.classList.add('nick-paused');
+  }
+  function resumeGameAfterNickname() {
+    document.body.classList.remove('nick-paused');
+    if (window.GAME) window.GAME.over = false;
+    // Reset spawn timers so things don't all spawn at once after pause
+    if (window.__resetSpawnTimers) window.__resetSpawnTimers();
+  }
+
   function boot() {
     ensureTrophyBtn();
-    if (!getNick()) ensureNicknameOverlay();
+    if (!getNick()) {
+      pauseGameForNickname();
+      ensureNicknameOverlay();
+    }
     watchGameState();
   }
   if (document.readyState === 'loading') {
@@ -4902,8 +4918,8 @@
 <style>
   #lbBtn {
     position: fixed;
-    top: calc(14px + env(safe-area-inset-top, 0px));
-    right: 14px;
+    top: clamp(180px, 26vh, 260px);   /* below the health bar */
+    left: 14px;
     width: 44px; height: 44px;
     border-radius: 50%;
     border: 2px solid rgba(255, 215, 110, 0.7);
@@ -4918,8 +4934,12 @@
   #lbBtn:hover { filter: brightness(1.1); }
   #lbBtn:active { transform: scale(0.95); }
   @media (pointer: coarse) and (max-width: 520px) {
-    #lbBtn { width: 40px; height: 40px; font-size: 20px; right: 10px; }
-    .score { right: 60px !important; }
+    #lbBtn {
+      width: 38px; height: 38px;
+      font-size: 18px;
+      left: 10px;
+      top: clamp(150px, 22vh, 220px);
+    }
   }
   #nickOverlay {
     position: fixed; inset: 0;
@@ -4940,7 +4960,7 @@
     box-shadow: 0 0 40px rgba(120,80,200,0.5);
     max-width: 360px; width: 88%;
   }
-  .nick-card h2 { margin: 0 0 6px; font-size: clamp(20px, 3vw, 28px); color: #ffd76a; }
+  .nick-card h2 { margin: 0 0 22px; font-size: clamp(20px, 3vw, 28px); color: #ffd76a; }
   .nick-card p  { margin: 0 0 16px; opacity: 0.85; font-size: 14px; }
   #nickInput {
     width: 100%; box-sizing: border-box;
