@@ -2141,7 +2141,7 @@
     if (inEndless && endlessStartTs > 0) {
       const endlessSeconds = (performance.now() - endlessStartTs) / 1000;
       // +8% difficulty every 20 seconds in endless, capped at +80%
-      endlessBonus = 1 + Math.min(0.8, Math.floor(endlessSeconds / 20) * 0.08);
+      endlessBonus = 1 + Math.min(1.2, Math.floor(endlessSeconds / 15) * 0.10);
     }
     return base * endlessBonus;
   }
@@ -2978,17 +2978,17 @@
       el, x, y, w, h,
       baseX: x,
       vy: isSine
-        ? (1.5 + Math.random() * 1.5) * mult
-        : (1.2 + Math.random() * 1.8) * mult * (isGun ? 0.85 : 1),
+        ? (1.875 + Math.random() * 1.875) * mult         // +25% sine fall speed
+        : (1.6 + Math.random() * 1.4) * mult * (isGun ? 0.85 : 1),
       vx: 0,
       sway:    isSine ? Math.random() * 6.28 : 0,
       swayAmp: isSine ? 120 + Math.random() * 80 : 0,
-      hp:    isGun ? (GAME.level >= 7 ? 3 : 2) : 2,
-      maxHp: isGun ? (GAME.level >= 7 ? 3 : 2) : 2,
+      hp:    isGun ? (GAME.level >= 7 ? 3 : 2) : (GAME.level >= 5 ? 3 : 2),
+      maxHp: isGun ? (GAME.level >= 7 ? 3 : 2) : (GAME.level >= 5 ? 3 : 2),
       isGun,
       isSine,
       isSplitter,
-      lastShot: performance.now() + 400 + Math.random() * 300,
+      lastShot: performance.now() - 100 + Math.random() * 200,
     });
   }
 
@@ -3013,8 +3013,8 @@
     ufos.push({
       el, x: sx, y: sy, w: size, h: size * 0.6,
       baseX: sx,
-      vy: Math.sin(rad) * 3 * mult + 2,
-      vx: Math.cos(rad) * 3 * mult,
+      vy: Math.sin(rad) * 3.6 * mult + 2.4,
+      vx: Math.cos(rad) * 3.6 * mult,
       sway: 0, swayAmp: 0,
       hp: 1, maxHp: 1,
       isGun: false, isSine: false, isSplitter: false, isMini: true,
@@ -3383,7 +3383,7 @@
     const mult = levelMult();
     rocks.push({
       el, x, y, w: size, h: size,
-      vy: (2.2 + Math.random() * 1.4) * mult,
+      vy: (2.8 + Math.random() * 1.6) * mult,
       rot: Math.random() * 360,
       vrot: (Math.random() - 0.5) * 4,
     });
@@ -3847,8 +3847,7 @@
     // ---- Rocks (damaging asteroids) ----
     if (now > nextRock && GAME.level >= 2) {
       spawnRock();
-      const interval = Math.max(1500, 3500 - GAME.level * 220);
-      nextRock = now + interval + Math.random() * 1100;
+      nextRock = now + 2800 + Math.random() * 2200;
     }
     for (let i = rocks.length - 1; i >= 0; i--) {
       const r = rocks[i];
@@ -3908,7 +3907,7 @@
     // ---- Comets (telegraphed dodge hazards) ----
     if (now > nextComet && GAME.level >= 5) {
       spawnComet();
-      nextComet = now + 16000 + Math.random() * 10000;
+      nextComet = now + 11000 + Math.random() * 7000;
     }
     for (let i = cometWarnings.length - 1; i >= 0; i--) {
       if (now > cometWarnings[i].until) {
