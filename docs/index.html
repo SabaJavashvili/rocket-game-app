@@ -4914,6 +4914,18 @@
     if (any) pauseGame(); else resumeGame();
   });
 
+  // The game installs a global `touchstart` listener that calls preventDefault
+  // on everything outside .stick/.fire-btn/.victory-btn — that blocks input
+  // focus and the on-screen keyboard on mobile. Stop propagation in the
+  // capture phase for touches inside our overlays so the game never sees them.
+  ['touchstart', 'touchend', 'touchmove'].forEach(ev => {
+    document.addEventListener(ev, (e) => {
+      if (e.target.closest && e.target.closest('#nickOverlay, #lbOverlay, #lbBtn')) {
+        e.stopPropagation();
+      }
+    }, { capture: true });
+  });
+
   function boot() {
     _overlayObs.observe(document.body, { childList: true });
     ensureTrophyBtn();
