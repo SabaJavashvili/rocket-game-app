@@ -908,7 +908,7 @@
   /* Shared countdown bar inside timed powerup badges */
   .pu-timebar {
     position: absolute;
-    left: 6px; right: 6px; bottom: 3px;
+    left: 6px; right: 6px; bottom: 1px;
     height: 5px;
     background: rgba(0, 0, 0, 0.45);
     border: 1px solid rgba(255, 255, 255, 0.18);
@@ -967,6 +967,8 @@
     position: relative;
     z-index: 6;
     padding: 6px 10px;
+    box-sizing: border-box;
+    min-height: 28px;
     border-radius: 10px;
     background: rgba(40, 14, 6, 0.6);
     border: 1px solid rgba(255, 170, 60, 0.45);
@@ -978,6 +980,14 @@
     gap: 6px;
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
+  }
+  /* Match streak-hud's icon footprint (16×16) so combo and streak rows are
+     the same height regardless of how the system renders the 🛸 emoji. */
+  .combo-hud > span[aria-hidden="true"] {
+    width: 16px; height: 16px;
+    display: inline-flex;
+    align-items: center; justify-content: center;
+    font-size: 14px; line-height: 1;
   }
   .combo-hud.on { display: inline-flex; }
   .combo-hud.active {
@@ -994,6 +1004,8 @@
     position: relative;
     z-index: 6;
     padding: 6px 10px;
+    box-sizing: border-box;
+    min-height: 28px;
     border-radius: 10px;
     background: rgba(40, 30, 6, 0.55);
     border: 1px solid rgba(255, 210, 90, 0.45);
@@ -1592,28 +1604,28 @@
       <!-- Shield -->
       <div class="pu-badge shield" id="shieldBadge" aria-live="polite">
         <span aria-hidden="true">🛡</span>
-        <span id="shieldTime">10</span>s
+        <span><span id="shieldTime">10</span>s</span>
         <div class="pu-timebar"><div class="pu-timebar-fill" id="shieldBar"></div></div>
       </div>
 
       <!-- Double-shot -->
       <div class="ds-badge" id="dsBadge" aria-live="polite">
         <span aria-hidden="true">⇈</span>
-        <span id="dsTime">10</span>s
+        <span><span id="dsTime">10</span>s</span>
         <div class="pu-timebar"><div class="pu-timebar-fill" id="dsBar"></div></div>
       </div>
 
       <!-- Magnet -->
       <div class="pu-badge magnet" id="magnetBadge" aria-live="polite">
         <span aria-hidden="true">🧲</span>
-        <span id="magnetTime">8</span>s
+        <span><span id="magnetTime">8</span>s</span>
         <div class="pu-timebar"><div class="pu-timebar-fill" id="magnetBar"></div></div>
       </div>
 
       <!-- Slow-motion -->
       <div class="pu-badge slow" id="slowBadge" aria-live="polite">
         <span aria-hidden="true">⏱</span>
-        <span id="slowTime">10</span>s
+        <span><span id="slowTime">10</span>s</span>
         <div class="pu-timebar"><div class="pu-timebar-fill" id="slowBar"></div></div>
       </div>
     </div>
